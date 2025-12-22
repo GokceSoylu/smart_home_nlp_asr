@@ -95,7 +95,7 @@ results/confusion_matrix_mlp.png
 - seaborn
 ## 9. Author
 
-Gökçe Soylu
+Gökçe Soylu :)
 
 Aydın Adnan Menderes University
 
