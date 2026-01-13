@@ -1,66 +1,59 @@
-import numpy as np
 import os
+import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-import seaborn as sns
 
-# --- PATHS ---
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_PATH = os.path.join(BASE_DIR, "data", "dataset_split.npz")
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
+# Load dataset
+data = np.load("../data/dataset_split.npz")
 
-os.makedirs(RESULTS_DIR, exist_ok=True)
-
-# --- LOAD DATA ---
-data = np.load(DATA_PATH)
-X_train = data["X_train"]
-X_test = data["X_test"]
-y_train = data["y_train"]
-y_test = data["y_test"]
+X_train, X_test = data["X_train"], data["X_test"]
+y_train, y_test = data["y_train"], data["y_test"]
 
 print("Dataset loaded.")
 
-# --- TRAIN BEST MODEL (MLP) ---
-model = Pipeline([
-    ("scaler", StandardScaler()),
-    ("mlp", MLPClassifier(
-        hidden_layer_sizes=(256, 128),
-        activation="relu",
-        max_iter=50,
-        random_state=42
-    ))
-])
-
+# Train MLP model
 print("Training MLP model...")
-model.fit(X_train, y_train)
+mlp = MLPClassifier(hidden_layer_sizes=(128,), max_iter=50, random_state=42)
+mlp.fit(X_train, y_train)
 
-# --- PREDICT ---
-y_pred = model.predict(X_test)
+# Predictions
+y_pred = mlp.predict(X_test)
 
-# --- CONFUSION MATRIX ---
-cm = confusion_matrix(y_test, y_pred)
+# ---- NEW PART ----
+# Select top 10 most frequent labels
+unique_labels, counts = np.unique(y_test, return_counts=True)
+top_labels = unique_labels[np.argsort(counts)[-10:]]
 
-# --- PLOT ---
-plt.figure(figsize=(12, 10))
+# Filter data
+mask = np.isin(y_test, top_labels)
+y_test_filtered = y_test[mask]
+y_pred_filtered = y_pred[mask]
+
+# Confusion matrix
+cm = confusion_matrix(y_test_filtered, y_pred_filtered, labels=top_labels)
+
+# Plot
+plt.figure(figsize=(10, 8))
 sns.heatmap(
     cm,
+    annot=True,
+    fmt="d",
     cmap="Blues",
-    square=True,
-    cbar=True,
-    xticklabels=False,
-    yticklabels=False
+    xticklabels=top_labels,
+    yticklabels=top_labels
 )
 
-plt.title("Confusion Matrix – MLP Classifier")
 plt.xlabel("Predicted Label")
 plt.ylabel("True Label")
-
-output_path = os.path.join(RESULTS_DIR, "confusion_matrix_mlp.png")
+plt.title("Confusion Matrix – MLP (Top 10 Classes)")
 plt.tight_layout()
-plt.savefig(output_path, dpi=300)
+
+# Save
+os.makedirs("../results", exist_ok=True)
+plt.savefig("../results/confusion_matrix_mlp.png", dpi=300)
+
 plt.close()
 
-print("Confusion matrix saved to:", output_path)
+print("Confusion matrix saved to results/confusion_matrix_mlp.png")
