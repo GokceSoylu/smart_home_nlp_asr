@@ -88,6 +88,29 @@ results/confusion_matrix_mlp.png
 - scikit-learn
 - matplotlib
 - seaborn
+
+---
+
+## Bonus – Meta Öğrenme (Roof Model)
+
+Pencere tabanlı konuşma tanıma modeline ek olarak, proje kapsamında bonus olarak bir meta öğrenme (roof model) yaklaşımı uygulanmıştır.
+
+Alt seviye model, ses kayıtlarını kısa zaman pencereleri üzerinden tahmin etmektedir. Ancak tek bir ses kaydı birden fazla pencere tahmini ve sessizlik içerebildiğinden, bu çıktıları birleştirerek tek bir nihai komut kararı veren bir üst seviye modele ihtiyaç duyulmuştur.
+
+Bu amaçla, alt modelin pencere bazlı tahminleri log dosyaları olarak kaydedilmiştir. Her log dosyası, aşağıdaki özellikler çıkarılarak tek bir özellik vektörüne dönüştürülmüştür:
+- Tahmin edilen komut metinlerinden elde edilen TF-IDF özellikleri
+- İstatistiksel özellikler:
+  - sessiz olmayan pencere sayısı
+  - sessiz olmayan pencere oranı
+  - ortalama ve maksimum güven skorları
+  - en baskın komut oranı
+  - tahmin geçiş sayısı
+
+Bu özellikler kullanılarak oluşturulan `roof_dataset.csv` dosyasında her satır bir ses kaydını temsil etmektedir. Bu veri kümesi üzerinde eğitilen roof model, her kayıt için tek bir nihai komut etiketi üretmiştir.
+
+Elde edilen sonuçlar, hiyerarşik (alt model + roof model) mimarinin ve meta öğrenme yaklaşımının konuşma komutu tanıma sisteminin kararlılığını ve doğruluğunu artırdığını göstermektedir.
+
+
 ## 9. Hazırlayan
 
 Gökçe Soylu
